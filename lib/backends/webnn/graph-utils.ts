@@ -1,8 +1,7 @@
 export class GraphUtils {
-
   private vertices: number;
   private color: boolean[];
-  private tensors: Map<number, { from: Set<number>, to: Set<number> }>;
+  private tensors: Map<number, {from: Set<number>, to: Set<number>}>;
   private tensorMapping: number[][];
   private next: number[][];
   private prev: number[][];
@@ -14,7 +13,6 @@ export class GraphUtils {
    * @param {number} vertices     Number of vertices in the graph.
    */
   constructor(vertices: number) {
-
     // Partitioning a neural network graph requires two graphs:
     // a "node graph" and a "tensor graph"
 
@@ -78,13 +76,9 @@ export class GraphUtils {
    *
    */
   addNode(nodeId: number, inTensors: ReadonlyArray<number>, outTensors: ReadonlyArray<number>) {
-
     for (const i of inTensors) {
       if (!this.tensors.has(i)) {
-        this.tensors.set(i, {
-          from: new Set(),
-          to: new Set()
-        });
+        this.tensors.set(i, {from: new Set(), to: new Set()});
       }
       for (const inNodeId of this.tensors.get(i)!.from) {
         this.addEdge(inNodeId, nodeId, i);
@@ -94,10 +88,7 @@ export class GraphUtils {
 
     for (const i of outTensors) {
       if (!this.tensors.has(i)) {
-        this.tensors.set(i, {
-          from: new Set(),
-          to: new Set()
-        });
+        this.tensors.set(i, {from: new Set(), to: new Set()});
       }
       for (const outNodeId of this.tensors.get(i)!.to) {
         this.addEdge(nodeId, outNodeId, i);
@@ -122,7 +113,6 @@ export class GraphUtils {
    * @param {number[]} outTensors List of output tensors of the graph
    */
   identifyInputOutputTensors(inTensors: ReadonlyArray<number>, outTensors: ReadonlyArray<number>) {
-
     for (const t of inTensors) {
       if (!this.tensors.has(t)) {
         return;
@@ -146,7 +136,6 @@ export class GraphUtils {
         this.outTensorsOfOutputNode.get(n)!.add(t);
       }
     }
-
   }
 
   /**
@@ -161,7 +150,7 @@ export class GraphUtils {
     for (let i = 0; i < this.vertices; i++) {
       indegree[i] = this.prev[i].length;
       if (!indegree[i]) {
-        q.push(i); // push node i with indegree zero
+        q.push(i);  // push node i with indegree zero
       }
     }
 
@@ -213,8 +202,8 @@ export class GraphUtils {
    *              xxxxx
    *
    */
-  biTopologicalSort(): Set<number>[] {
-    const order = new Array(this.vertices).fill(0);
+  biTopologicalSort(): Array<Set<number>> {
+    const order: number[] = new Array(this.vertices).fill(0);
     for (const u of this.topologicalSort()) {
       for (const v of this.prev[u]) {
         if (this.color[u] === this.color[v]) {
@@ -225,7 +214,7 @@ export class GraphUtils {
       }
     }
 
-    const result = [];
+    const result: Array<Set<number>> = [];
     for (const [nodeId, ord] of order.entries()) {
       if (typeof result[ord] === 'undefined') {
         result[ord] = new Set();
@@ -253,7 +242,6 @@ export class GraphUtils {
    *                          returned by `biTopologicalSort`
    */
   partition(eager = false) {
-
     function union<T>(a: Set<T>, b: Set<T>): Set<T> {
       return new Set([...a, ...b]);
     }
@@ -271,15 +259,16 @@ export class GraphUtils {
 
     let partitions = [];
     if (eager) {
-      for (const i of this.topologicalSort())
+      for (const i of this.topologicalSort()) {
         partitions.push(new Set([i]));
+      }
     } else {
       partitions = this.biTopologicalSort();
     }
 
     for (const partition of partitions) {
-      let inTensors = new Set();
-      let outTensors = new Set();
+      let inTensors = new Set<number>();
+      let outTensors = new Set<number>();
       for (const u of partition) {
         for (const v of this.next[u]) {
           if (!partition.has(v)) {
@@ -294,7 +283,7 @@ export class GraphUtils {
         }
       }
       for (const u of partition) {
-        inTensors = union(inTensors, crossTensorsTo.get(u)!);
+        inTensors = union(inTensors, crossTensorsTo.get(u));
 
         if (this.inTensorsOfInputNode.has(u)) {
           inTensors = union(inTensors, this.inTensorsOfInputNode.get(u)!);

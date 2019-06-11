@@ -1,11 +1,11 @@
-import {ShapeUtil} from '../../util';
 import {Tensor} from '../../tensor';
-import {NeuralNetworkContext, NNTensorType, OperandOptions, Model, Compilation, Execution} from './types';
+import {ShapeUtil} from '../../util';
+
 import {WebNNInferenceHandler} from './inference-handler';
+import {Compilation, Execution, Model, NeuralNetworkContext, NNTensorType, OperandOptions} from './types';
 import {WebNNGraphOp} from './webnn-graph-op';
 
 export class WebNNGraph {
-
   constructor() {
     this._operandIndex = 0;
     this._onnxIdToNNId = new Map();
@@ -18,12 +18,9 @@ export class WebNNGraph {
     });
     await this._execution.startCompute();
     return this._graph.outputs.map((onnxId) => handler.getTensor(onnxId));
-  };
+  }
 
-  async compile(handler: WebNNInferenceHandler,
-                graph: WebNNGraphOp,
-                inputs: Tensor[]): Promise<WebNNGraph> {
-
+  async compile(handler: WebNNInferenceHandler, graph: WebNNGraphOp, inputs: Tensor[]): Promise<WebNNGraph> {
     this._nn = handler.session.webnnContext;
     this._model = await this._nn.createModel();
     this._graph = graph;
@@ -83,17 +80,15 @@ export class WebNNGraph {
   }
 
   _addOpsAndParams(handler: WebNNInferenceHandler) {
-
     for (let i = 0; i < this._graph.nodes.length; i++) {
-
-      let opType: number = -1;
-      let inputs: number[] = [];
-      let outputs: number[] = [];
+      let opType = -1;
+      const inputs: number[] = [];
+      const outputs: number[] = [];
 
       let node = this._graph.nodes[i];
-      let attributes = node.attributes;
+      const attributes = node.attributes;
 
-      switch(node.opType) {
+      switch (node.opType) {
         case 'Conv': {
           const convNode = node;
           const input = handler.getTensor(node.inputs[0]);
@@ -138,9 +133,7 @@ export class WebNNGraph {
 
           let nextNode = this._graph.nodes[i + 1];
           // fuse batch norm preceded by a conv
-          if (nextNode &&
-              nextNode.opType === 'BatchNormalization' &&
-              node.outputs[0] === nextNode.inputs[0]) {
+          if (nextNode && nextNode.opType === 'BatchNormalization' && node.outputs[0] === nextNode.inputs[0]) {
             const bnNode = nextNode;
             const scale = handler.getTensor(bnNode.inputs[1]);
             const bnBias = handler.getTensor(bnNode.inputs[2]);
@@ -157,7 +150,7 @@ export class WebNNGraph {
             for (let c = 0; c < nChannels; c++) {
               const w = scaleTensor[c] / Math.sqrt(varTensor[c] + epsilon);
               convBiasTensor[c] = bnBiasTensor[c] + (convBiasTensor[c] - meanTensor[c]) * w;
-              for (let p = c * nPixels; p < (c+1) * nPixels; p++) {
+              for (let p = c * nPixels; p < (c + 1) * nPixels; p++) {
                 convFilterTensor[p] *= w;
               }
             }
@@ -184,7 +177,7 @@ export class WebNNGraph {
               for (let n = 0; n < N; ++n) {
                 for (let h = 0; h < H; ++h) {
                   for (let w = 0; w < W; ++w) {
-                    chwnData[h*W*N + w*N + n] = nhwcData[n*H*W + h*W + w];
+                    chwnData[h * W * N + w * N + n] = nhwcData[n * H * W + h * W + w];
                   }
                 }
               }
@@ -211,9 +204,7 @@ export class WebNNGraph {
             inputs.push(this._addScalarInt32(1));
           }
 
-          if (nextNode &&
-              nextNode.opType === 'Relu' &&
-              node.outputs[0] === nextNode.inputs[0]) {
+          if (nextNode && nextNode.opType === 'Relu' && node.outputs[0] === nextNode.inputs[0]) {
             // Fuse relu
             inputs.push(this._addScalarInt32(this._nn.FUSED_RELU));
             i++;
@@ -223,8 +214,10 @@ export class WebNNGraph {
           }
 
           // Add outputs
-          const outputHeight = Math.floor((inputHeight-kernelHeight + paddingHeightBegin+paddingHeightEnd)/strideY + 1);
-          const outputWidth = Math.floor((inputWidth - kernelWidth + paddingWidthBegin + paddingWidthEnd)/strideX + 1);
+          const outputHeight =
+              Math.floor((inputHeight - kernelHeight + paddingHeightBegin + paddingHeightEnd) / strideY + 1);
+          const outputWidth =
+              Math.floor((inputWidth - kernelWidth + paddingWidthBegin + paddingWidthEnd) / strideX + 1);
           const outputChannels = isDepthWiseConv ? nGroups : nChannels;
           const outputDims = [batch, outputHeight, outputWidth, outputChannels];
           const outputId = this._addTensorFloat32(outputDims);
@@ -274,10 +267,8 @@ export class WebNNGraph {
           inputs.push(this._addScalarInt32(1));
           inputs.push(this._addScalarInt32(1));
 
-          let nextNode = this._graph.nodes[i + 1];
-          if (nextNode &&
-              nextNode.opType === 'Relu' &&
-              node.outputs[0] === nextNode.inputs[0]) {
+          const nextNode = this._graph.nodes[i + 1];
+          if (nextNode && nextNode.opType === 'Relu' && node.outputs[0] === nextNode.inputs[0]) {
             // Fuse relu
             inputs.push(this._addScalarInt32(this._nn.FUSED_RELU));
             i++;
@@ -337,7 +328,6 @@ export class WebNNGraph {
         case 'Mul':
         case 'Sum':
         case 'Add': {
-
           if (node.opType === 'Sum' && node.inputs.length !== 2) {
             throw new Error(`Only support Sum with two inputs`);
           }
@@ -352,10 +342,8 @@ export class WebNNGraph {
             opType = this._nn.MUL;
           }
 
-          let nextNode = this._graph.nodes[i + 1];
-          if (nextNode &&
-              nextNode.opType === 'Relu' &&
-              node.outputs[0] === nextNode.inputs[0]) {
+          const nextNode = this._graph.nodes[i + 1];
+          if (nextNode && nextNode.opType === 'Relu' && node.outputs[0] === nextNode.inputs[0]) {
             // Fuse relu
             inputs.push(this._addScalarInt32(this._nn.FUSED_RELU));
             i++;
@@ -371,8 +359,8 @@ export class WebNNGraph {
           // Compatible dims (multidirectional broadcasting)
           const outputDims = new Array(Math.max(in1Dims.length, in2Dims.length));
           for (let i = in1Dims.length - 1, j = in2Dims.length - 1, k = outputDims.length - 1; k >= 0;) {
-            let dim1 = in1Dims[i--] || 1;
-            let dim2 = in2Dims[j--] || 1;
+            const dim1 = in1Dims[i--] || 1;
+            const dim2 = in2Dims[j--] || 1;
             if (dim1 !== dim2 && dim1 !== 1 && dim2 !== 1) {
               throw new Error(`Dimensions of ${in1} and ${in2} are not compatible`);
             }
@@ -391,8 +379,8 @@ export class WebNNGraph {
           const weights = handler.getTensor(node.inputs[1]);  // B
           const bias = handler.getTensor(node.inputs[2]);     // C
 
-          const alpha  = attributes.getFloat('alpha', 1.0);
-          const beta   = attributes.getFloat('beta', 1.0);
+          const alpha = attributes.getFloat('alpha', 1.0);
+          const beta = attributes.getFloat('beta', 1.0);
           const transA = attributes.getInt('transA', 0);
           const transB = attributes.getInt('transB', 0);
 
@@ -409,10 +397,8 @@ export class WebNNGraph {
 
           opType = this._nn.FULLY_CONNECTED;
 
-          let nextNode = this._graph.nodes[i + 1];
-          if (nextNode &&
-              nextNode.opType === 'Relu' &&
-              node.outputs[0] === nextNode.inputs[0]) {
+          const nextNode = this._graph.nodes[i + 1];
+          if (nextNode && nextNode.opType === 'Relu' && node.outputs[0] === nextNode.inputs[0]) {
             // Fuse relu
             inputs.push(this._addScalarInt32(this._nn.FUSED_RELU));
             i++;
@@ -470,8 +456,9 @@ export class WebNNGraph {
 
           const [batch, inputHeight, inputWidth, inputChannels] = input.dims;
           const outputHeight =
-              Math.floor((inputHeight - kernelHeight + paddingHeightBegin + paddingHeightEnd)/strideY+1);
-          const outputWidth = Math.floor((inputWidth - kernelWidth + paddingWidthBegin + paddingWidthEnd)/strideX + 1);
+              Math.floor((inputHeight - kernelHeight + paddingHeightBegin + paddingHeightEnd) / strideY + 1);
+          const outputWidth =
+              Math.floor((inputWidth - kernelWidth + paddingWidthBegin + paddingWidthEnd) / strideX + 1);
           const outputDims = [batch, outputHeight, outputWidth, inputChannels];
           const outputId = this._addTensorFloat32(outputDims);
           const outputTensor = new Tensor(outputDims, 'float32');
@@ -518,7 +505,7 @@ export class WebNNGraph {
         } break;
         case 'Flatten': {
           const input = handler.getTensor(node.inputs[0]);
-          const axis =  attributes.getInt('axis', 1);
+          const axis = attributes.getInt('axis', 1);
           inputs.push(this._getNNTensorId(node.inputs[0]));
 
           const inputDims = input.dims;
@@ -526,12 +513,10 @@ export class WebNNGraph {
           if (axis > rank || axis < 0) {
             throw new Error(`Axis ${axis} is not in the range [0, ${rank}]`);
           }
-          let outputDim1 = inputDims.slice(0, axis);
-          let outputDim2 = inputDims.slice(axis);
-          const outputDims = [
-            outputDim1.length ? ShapeUtil.size(outputDim1) : 1,
-            outputDim2.length ? ShapeUtil.size(outputDim2) : 1
-          ];
+          const outputDim1 = inputDims.slice(0, axis);
+          const outputDim2 = inputDims.slice(axis);
+          const outputDims =
+              [outputDim1.length ? ShapeUtil.size(outputDim1) : 1, outputDim2.length ? ShapeUtil.size(outputDim2) : 1];
 
           const shapeId = this._addTensorInt32(new Int32Array(outputDims), [2]);
           inputs.push(shapeId);
@@ -559,7 +544,7 @@ export class WebNNGraph {
           inputs.push(this._addScalarInt32(concatAxis));
 
           // Add output
-          let outputDims = Array.from(handler.getTensor(node.inputs[0]).dims);
+          const outputDims = Array.from(handler.getTensor(node.inputs[0]).dims);
           for (let i = 1; i < node.inputs.length; ++i) {
             outputDims[concatAxis] += handler.getTensor(node.inputs[i]).dims[concatAxis];
           }
@@ -575,8 +560,8 @@ export class WebNNGraph {
           // bypass Dropout node
           const input = handler.getTensor(node.inputs[0]);
           handler.setTensor(node.outputs[0], input);
+        }
           continue;
-        };
         case 'GlobalAveragePool': {
           const input = handler.getTensor(node.inputs[0]);
           inputs.push(this._getNNTensorId(node.inputs[0]));
@@ -621,9 +606,7 @@ export class WebNNGraph {
 
           opType = this._nn.SOFTMAX;
         } break;
-        default: {
-          throw new Error(`${node.opType} is not supported.}`);
-        }
+        default: { throw new Error(`${node.opType} is not supported.}`); }
       }
 
       this._addOperation(opType, inputs, outputs);
@@ -635,7 +618,7 @@ export class WebNNGraph {
   }
 
   _addOperand(type: OperandOptions, value?: NNTensorType) {
-    let index = this._operandIndex++;
+    const index = this._operandIndex++;
     this._model.addOperand(type);
     if (typeof value !== 'undefined') {
       this._setOperandValue(index, value);
@@ -656,17 +639,11 @@ export class WebNNGraph {
   }
 
   _addTensorFloat32(dims: number[], tensor?: Float32Array) {
-    return this._addOperand({
-      type: this._nn.TENSOR_FLOAT32,
-      dimensions: dims
-    }, tensor);
+    return this._addOperand({type: this._nn.TENSOR_FLOAT32, dimensions: dims}, tensor);
   }
 
   _addTensorInt32(tensor: Int32Array, dims: number[]) {
-    return this._addOperand({
-      type: this._nn.TENSOR_INT32,
-      dimensions: dims
-    }, tensor);
+    return this._addOperand({type: this._nn.TENSOR_INT32, dimensions: dims}, tensor);
   }
 
   private _nn: NeuralNetworkContext;

@@ -1,14 +1,14 @@
 import {Attribute} from '../../attribute';
+import {Graph} from '../../graph';
 import {Operator} from '../../operators';
 import {Tensor} from '../../tensor';
-import {WebNNInferenceHandler} from './inference-handler';
-import {Graph} from '../../graph';
 import {TensorUtil} from '../../util';
-import {WebNNGraphNode} from './webnn-graph-node';
+
+import {WebNNInferenceHandler} from './inference-handler';
 import {WebNNGraph} from './webnn-graph';
+import {WebNNGraphNode} from './webnn-graph-node';
 
 export class WebNNGraphOp implements Operator {
-
   public nodes: ReadonlyArray<Graph.Node>;
   public inputs: number[];
   public outputs: number[];
@@ -20,11 +20,12 @@ export class WebNNGraphOp implements Operator {
     this.outputs = webnnGraphNode.outputs;
   }
 
-  initialize(attributes: Attribute): void {
-  }
+  initialize(attributes: Attribute): void {}
 
   // TODO: check input tensors
-  checkInputs(inputs: Tensor[]): boolean { return true; }
+  checkInputs(inputs: Tensor[]): boolean {
+    return true;
+  }
 
   async run(handler: WebNNInferenceHandler, inputs: Tensor[]): Promise<Tensor[]> {
     const nhwcInputs = inputs.map((tensor) => TensorUtil.toNHWC(tensor));
@@ -34,5 +35,5 @@ export class WebNNGraphOp implements Operator {
     }
     const nhwcOutputs = await this.webnnGraph.run(handler, nhwcInputs);
     return nhwcOutputs.map((tensor) => TensorUtil.toNCHW(tensor));
-  };
+  }
 }

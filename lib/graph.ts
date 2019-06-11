@@ -58,8 +58,7 @@ export declare namespace Graph {
     getOutputIndices(): ReadonlyArray<number>;
     getValues(): ReadonlyArray<Graph.Value>;
     getNodes(): ReadonlyArray<Graph.Node>;
-    makeNewValue(from: number, to: number[], tensor: Tensor|undefined,
-                 type: Graph.ValueType|undefined): Graph.Value;
+    makeNewValue(from: number, to: number[], tensor: Tensor|undefined, type: Graph.ValueType|undefined): Graph.Value;
   }
 
   // an initializer can use transformer to transform the graph
@@ -179,7 +178,7 @@ class GraphImpl implements Graph, Graph.Transformer {
 
   setNodes(nodes: Node[]) {
     this._nodes = nodes;
-  };
+  }
 
   setValues(values: Value[]) {
     this._allData = values;

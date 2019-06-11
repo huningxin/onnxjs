@@ -9,14 +9,13 @@ import {Session} from '../../session';
 import {Tensor} from '../../tensor';
 import {TensorUtil} from '../../util';
 import {WebNNBackend} from '../backend-webnn';
-
-import {preferStrType, NeuralNetworkContext} from './types';
-import {WebNNInferenceHandler} from './inference-handler';
-import {WEBNN_OP_RESOLVE_RULES, WEBNN_SUPPORTED_OPS} from './op-resolve-rules';
 import {CPU_OP_RESOLVE_RULES} from '../cpu/op-resolve-rules';
 import {WASM_OP_RESOLVE_RULES} from '../wasm/op-resolve-rules';
 
 import {GraphUtils} from './graph-utils';
+import {WebNNInferenceHandler} from './inference-handler';
+import {WEBNN_OP_RESOLVE_RULES, WEBNN_SUPPORTED_OPS} from './op-resolve-rules';
+import {NeuralNetworkContext, preferStrType} from './types';
 import {WebNNGraphNode} from './webnn-graph-node';
 
 export class WebNNSessionHandler implements SessionHandler, Graph.Initializer {
@@ -27,9 +26,10 @@ export class WebNNSessionHandler implements SessionHandler, Graph.Initializer {
 
   private graph: Graph;
 
-  constructor(public readonly backend: WebNNBackend, public readonly context: Session.Context,
-              public readonly wasmFallback: boolean, public readonly cpuFallback: boolean,
-              public readonly prefer: preferStrType) {
+  constructor(
+      public readonly backend: WebNNBackend, public readonly context: Session.Context,
+      public readonly wasmFallback: boolean, public readonly cpuFallback: boolean,
+      public readonly prefer: preferStrType) {
     this.webnnContext = backend.nnContext;
     this.tensorCache = new Map();
     this.initializers = new Set();
@@ -49,7 +49,6 @@ export class WebNNSessionHandler implements SessionHandler, Graph.Initializer {
   // graph here and this implementation still has some known issues, e.g., Graph.finalizeGraph()
   // will break some graphs
   transformGraph(transformer: Graph.Transformer) {
-
     const nnSupportedOps = new Set(WEBNN_SUPPORTED_OPS);
 
     const graphNodes = transformer.getNodes();
@@ -59,7 +58,7 @@ export class WebNNSessionHandler implements SessionHandler, Graph.Initializer {
     graphNodes.forEach((op, i) => {
       colorGraph.addNode(i, op.inputs, op.outputs);
       if (!nnSupportedOps.has(op.opType)) {
-        colorGraph.setBlack(i); // mark unsupported ops black
+        colorGraph.setBlack(i);  // mark unsupported ops black
       }
     });
     colorGraph.identifyInputOutputTensors(transformer.getInputIndices(), transformer.getOutputIndices());
@@ -91,23 +90,23 @@ export class WebNNSessionHandler implements SessionHandler, Graph.Initializer {
       newNameToNewId.set(node.name, i);
     }
 
-    const graphValues= transformer.getValues();
+    const graphValues = transformer.getValues();
     const newGraphValues = [];
     for (const value of graphValues) {
-      let oldFromId = value.from;
+      const oldFromId = value.from;
       let newFromId = oldFromId;
       if (oldFromId !== undefined && oldFromId !== -1) {
-        let oldFromName = graphNodes[oldFromId].name;
-        let newFromName = oldNameToNewName.get(oldFromName)!;
+        const oldFromName = graphNodes[oldFromId].name;
+        const newFromName = oldNameToNewName.get(oldFromName)!;
         newFromId = newNameToNewId.get(newFromName)!;
       }
 
-      let oldToIds = value.to;
-      let oldToNames= oldToIds.map((oldId) => graphNodes[oldId].name);
-      let newToNames = oldToNames.map((oldName) => oldNameToNewName.get(oldName)!);
-      let newToIds = newToNames.map((newName) => newNameToNewId.get(newName)!);
+      const oldToIds = value.to;
+      const oldToNames = oldToIds.map((oldId) => graphNodes[oldId].name);
+      const newToNames = oldToNames.map((oldName) => oldNameToNewName.get(oldName)!);
+      const newToIds = newToNames.map((newName) => newNameToNewId.get(newName)!);
 
-      let newValue = transformer.makeNewValue(newFromId, newToIds, value.tensor, value.type);
+      const newValue = transformer.makeNewValue(newFromId, newToIds, value.tensor, value.type);
       newGraphValues.push(newValue);
     }
 
