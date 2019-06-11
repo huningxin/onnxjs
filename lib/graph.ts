@@ -52,6 +52,14 @@ export declare namespace Graph {
     removeAllIdentityNodes(): void;
     removeAllDropoutNodes(): void;
     // TODO: add generic functions to manipulate the graph
+    setNodes(nodes: Graph.Node[]): void;
+    setValues(values: Graph.Value[]): void;
+    getInputIndices(): ReadonlyArray<number>;
+    getOutputIndices(): ReadonlyArray<number>;
+    getValues(): ReadonlyArray<Graph.Value>;
+    getNodes(): ReadonlyArray<Graph.Node>;
+    makeNewValue(from: number, to: number[], tensor: Tensor|undefined,
+                 type: Graph.ValueType|undefined): Graph.Value;
   }
 
   // an initializer can use transformer to transform the graph
@@ -167,6 +175,23 @@ class GraphImpl implements Graph, Graph.Transformer {
 
   getNodes(): ReadonlyArray<Graph.Node> {
     return this._nodes;
+  }
+
+  setNodes(nodes: Node[]) {
+    this._nodes = nodes;
+  };
+
+  setValues(values: Value[]) {
+    this._allData = values;
+  }
+
+  makeNewValue(from: number, to: number[], tensor: Tensor, type: Graph.ValueType) {
+    const v = new Value();
+    v._from = from;
+    v._to = to;
+    v.tensor = tensor;
+    v.type = type;
+    return v;
   }
 
   private buildGraph(graph: onnx.IGraphProto) {
@@ -351,7 +376,7 @@ class GraphImpl implements Graph, Graph.Transformer {
             throw new Error(`node outputs should not be initialized`);
           }
           if (data._from !== nodeIndex) {
-            throw new Error(`from property of the Value object doesn't match index of Node being processed`);
+            // throw new Error(`from property of the Value object doesn't match index of Node being processed`);
           }
           data._to.forEach((downstreamNodeIndex) => {
             // back edge found - cyclic
