@@ -6,7 +6,6 @@ import {Tensor} from '../../tensor';
 import {WebNNSessionHandler} from './session-handler';
 
 export class WebNNInferenceHandler implements InferenceHandler {
-
   constructor(public session: WebNNSessionHandler) {}
 
   /**
@@ -23,7 +22,5 @@ export class WebNNInferenceHandler implements InferenceHandler {
     this.session.setTensor(id, tensor);
   }
 
-  dispose(): void {
-  }
-
+  dispose(): void {}
 }

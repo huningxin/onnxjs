@@ -3,10 +3,10 @@
 
 import {Backend as BackendInterface} from '../api/onnx';
 import {Backend, SessionHandler} from '../backend';
-import {WasmBackend} from './backend-wasm';
 import {Logger} from '../instrument';
 import {Session} from '../session';
 
+import {WasmBackend} from './backend-wasm';
 import {WebNNSessionHandler} from './webnn/session-handler';
 import {NeuralNetworkContext, NNNavigator, preferStrType} from './webnn/types';
 

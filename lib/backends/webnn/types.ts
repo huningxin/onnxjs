@@ -1,7 +1,5 @@
 export interface NNNavigator extends Navigator {
-  ml: {
-    getNeuralNetworkContext: () => NeuralNetworkContext;
-  }
+  ml: {getNeuralNetworkContext: () => NeuralNetworkContext;};
 }
 
 export interface NeuralNetworkContext {
@@ -65,7 +63,7 @@ export interface NeuralNetworkContext {
 }
 
 // Supported typed array
-export type NNTensorType = Int32Array | Float32Array;
+export type NNTensorType = Int32Array|Float32Array;
 
 export interface OperandOptions {
   type: number;
@@ -97,10 +95,10 @@ export interface Execution {
   startCompute: () => Promise<number>;
 }
 
-export interface preferCodeMap {
+export interface PreferCodeMap {
   fast: number;
   sustained: number;
   low: number;
-};
+}
 
-export type preferStrType = keyof preferCodeMap;
+export type preferStrType = keyof PreferCodeMap;
