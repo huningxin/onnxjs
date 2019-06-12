@@ -375,7 +375,7 @@ class GraphImpl implements Graph, Graph.Transformer {
             throw new Error(`node outputs should not be initialized`);
           }
           if (data._from !== nodeIndex) {
-            // throw new Error(`from property of the Value object doesn't match index of Node being processed`);
+            throw new Error(`from property of the Value object doesn't match index of Node being processed`);
           }
           data._to.forEach((downstreamNodeIndex) => {
             // back edge found - cyclic
