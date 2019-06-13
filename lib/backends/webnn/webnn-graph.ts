@@ -21,8 +21,17 @@ export class WebNNGraph {
   }
 
   async compile(handler: WebNNInferenceHandler, graph: WebNNGraphOp, inputs: Tensor[]): Promise<WebNNGraph> {
+    const prefer = handler.session.prefer;
     this._nn = handler.session.webnnContext;
-    this._model = await this._nn.createModel();
+    if (this._nn.supportWasm || this._nn.supportWebGL) {
+      let backendStr = 'WASM';
+      if (prefer === 'sustained' && this._nn.supportWebGL) {
+        backendStr = 'WebGL';
+      }
+      this._model = await this._nn.createModel({backend: backendStr});
+    } else {
+      this._model = await this._nn.createModel();
+    }
     this._graph = graph;
 
     inputs.forEach((tensor, i) => {
@@ -42,7 +51,6 @@ export class WebNNGraph {
       low: this._nn.PREFER_LOW_POWER,
     };
 
-    const prefer = handler.session.prefer;
     this._compilation = await this._model.createCompilation();
     this._compilation.setPreference(preferCodeMap[prefer]);
     await this._compilation.finish();

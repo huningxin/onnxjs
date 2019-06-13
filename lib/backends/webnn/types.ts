@@ -1,5 +1,5 @@
 export interface NNNavigator extends Navigator {
-  ml: {getNeuralNetworkContext: () => NeuralNetworkContext;};
+  ml: {isPolyfill?: boolean; getNeuralNetworkContext: () => NeuralNetworkContext;};
 }
 
 export interface NeuralNetworkContext {
@@ -58,6 +58,10 @@ export interface NeuralNetworkContext {
   PREFER_LOW_POWER: number;
   PREFER_FAST_SINGLE_ANSWER: number;
   PREFER_SUSTAINED_SPEED: number;
+
+  // Polyfill attributes.
+  supportWasm?: boolean;
+  supportWebGL?: boolean;
 
   createModel: (options?: {backend: string}) => Promise<Model>;
 }
