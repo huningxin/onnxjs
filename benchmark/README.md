@@ -6,6 +6,7 @@ This sub project is to benchmark and compare ONNX.js peformance vs other leading
 - Keras.js
 - WebDNN
 - ONNX.js
+- OpenCV.js
 
 ## Backends
 (not all backends supported by all platforms)

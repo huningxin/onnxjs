@@ -48,7 +48,10 @@ const BackendMapping = {
     'webgl': 'GPU-webgl',
     'cpu': 'CPU-javascript',
     'webassembly': 'CPU-webassembly'
-  }
+  },
+  'OpenCV.js': {
+    'wasm': 'CPU-webassembly+webworker+SIMD',
+  },
 }
 
 const BenchmarkImageNetData = [
@@ -84,6 +87,12 @@ const BenchmarkImageNetData = [
                 inputs: IMAGE_URLS,
                 webglLevels: [1, 2]
             },
+            {
+                impl: 'OpenCV.js',
+                modelPath: `${SERVER_BASE_PATH}/data/model-onnx/resnet50_8.onnx`,
+                backends: [ 'wasm' ],
+                inputs: IMAGE_URLS
+            }
         ]
     },
 ];
@@ -138,6 +147,7 @@ function createBenchmark(name) {
         case 'Keras.js': return new KerasResnetBenchmark();
         case 'WebDNN': return new WebDnnResnetBenchmark();
         case 'ONNX.js': return new OnnxJsResnetBenchmark();
+        case 'OpenCV.js': return new OpenCVJsResnetBenchmark();
     }
 }
 async function runBenchmark(benchmarkData, backend, imageSize) {
@@ -317,6 +327,58 @@ class OnnxJsResnetBenchmark {
       const tensor = new onnx.Tensor(dataProcessedTensor.data, 'float32', [1, 3, width, height]);
       return tensor;
     }
+}
+
+class OpenCVJsResnetBenchmark {
+  async init(backend, modelPath, imageSize) {
+      const modelName = modelPath.split('/').pop();
+      this.imageSize = imageSize;
+      const that = this;
+      return new Promise(function(resolve, reject) {
+        cv.onRuntimeInitialized = () => {
+          console.log('opencv.js loaded');
+          fetch(modelPath).then(function(response) {
+            response.arrayBuffer().then(function(buffer) {
+              const data = new Uint8Array(buffer);
+              cv.FS_createDataFile('/', modelName, data, true, false, false);
+              that.net = cv.readNetFromONNX(modelName);
+              resolve();
+            });
+          });
+        };
+        cv.onAbort = () => { reject(); };
+      });
+  }
+
+  async runModel(data) {
+      const preprocessedData = this.preprocess(data, this.imageSize, this.imageSize);
+      this.net.setInput(preprocessedData);
+      const start = performance.now();
+      var result = this.net.forward();
+      const stop = performance.now();
+      this.duration = stop - start;
+      console.log(`Duration:${this.duration}ms`);
+      return result.data32F;
+  }
+
+  preprocess(data, width, height) {
+      // data processing
+      const dataTensor = ndarray(new Float32Array(data), [width, height, 4]);
+      const dataProcessedTensor = ndarray(new Float32Array(width * height * 3), [width, height, 3]);
+
+      ops.divseq(dataTensor, 128.0);
+      ops.subseq(dataTensor, 1.0);
+
+      ops.assign(dataProcessedTensor.pick(null, null, 0), dataTensor.pick(null, null, 0));
+      ops.assign(dataProcessedTensor.pick(null, null, 1), dataTensor.pick(null, null, 1));
+      ops.assign(dataProcessedTensor.pick(null, null, 2), dataTensor.pick(null, null, 2));
+
+      const mat = cv.matFromArray(width, height, cv.CV_32FC3, dataProcessedTensor.data)
+
+      const blob = cv.blobFromImage(mat, 1, new cv.Size(width, height), new cv.Scalar(0,0,0));
+
+      return blob;
+  }
 }
 const results = [];
 const browser = __karma__.config.browser[0];

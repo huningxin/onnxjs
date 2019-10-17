@@ -9,7 +9,9 @@ module.exports = function(config) {
     files: [
       { pattern: 'dist/main.js' },
       { pattern: 'dist/onnx-wasm.wasm', included: false},
-	    { pattern: 'dist/onnx-worker.js', included: false},
+      { pattern: 'dist/onnx-worker.js', included: false},
+      { pattern: 'opencvjs/opencv.js', included: true },
+      { pattern: 'opencvjs/opencv_js.worker.js', included: false},
       { pattern: 'data/**/*', watched: false, included: false, served: true, nocache: true }
     ],
     proxies: {
@@ -31,8 +33,8 @@ module.exports = function(config) {
     logLevel: config.LOG_INFO,
     autoWatch: false,
     customLaunchers: {
-      ChromeTest: {base: 'Chrome', flags: ['--window-size=1,1']},
-      ChromeDebug: {debug: true, base: 'Chrome', flags: ['--remote-debugging-port=9333']}
+      ChromeTest: {base: 'Chrome', flags: ['--window-size=1,1', '--js-flags="--experimental-wasm-simd"']},
+      ChromeDebug: {debug: true, base: 'Chrome', flags: ['--remote-debugging-port=9333', '--js-flags="--experimental-wasm-simd"']}
     },
     client: {
       captureConsole: true,
