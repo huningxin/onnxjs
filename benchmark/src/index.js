@@ -199,7 +199,7 @@ class TensorFlowResnetBenchmark {
             console.log(`Setting the backend to ${backend}`);
             tf.setBackend(backend);
         }
-        this.model = await tf.loadModel(modelPath);
+        this.model = await tf.loadLayersModel(modelPath, {strict: false});
         console.log('Model loaded');
     }
     async runModel(data) {

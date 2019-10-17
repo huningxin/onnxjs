@@ -32,12 +32,12 @@
     "webpack-cli": "^3.1.2"
   },
   "dependencies": {
-    "@tensorflow/tfjs": "^0.13.3",
+    "@tensorflow/tfjs": "^1.2.9",
     "keras-js": "^1.0.3",
     "lodash": "^4.17.11",
     "ndarray": "^1.0.18",
     "ndarray-ops": "^1.2.2",
     "onnxjs": "file:../",
-    "webdnn": "^1.2.6"
+    "webdnn": "^1.2.10"
   }
 }
