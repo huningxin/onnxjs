@@ -1,9 +1,6 @@
 async function runExample() {
-  // Create an ONNX inference session with WebGL backend.
-  const session = new onnx.InferenceSession({ backendHint: 'webgl' });
-
-  // Load an ONNX model. This model is SqueezeNet that takes a 1*3*224*224 image and classifies it.
-  await session.loadModel("./squeezenetV1_8.onnx");
+  // Create an ONNX inference session with Wasm backend.
+  const session = await ort.InferenceSession.create('./squeezenetV1_8.onnx');;
 
   // load image.
   const imageLoader = new ImageLoader(imageSize, imageSize);
@@ -14,10 +11,13 @@ async function runExample() {
   const height = imageSize;
   const preprocessedData = preprocess(imageData.data, width, height);
 
-  const inputTensor = new onnx.Tensor(preprocessedData, 'float32', [1, 3, width, height]);
+  const inputTensor = new ort.Tensor('float32', preprocessedData, [1, 3, width, height]);
   // Run model with Tensor inputs and get the result.
-  const outputMap = await session.run([inputTensor]);
-  const outputData = outputMap.values().next().value.data;
+  const startTime = performance.now();
+  const outputMap = await session.run({data_0: inputTensor});
+  const elapsedTime = performance.now() - startTime;
+  console.log(`inference time ${elapsedTime.toFixed(2)} ms`);
+  const outputData = outputMap['softmaxout_1'].data;
 
   // Render the output result in html.
   printMatches(outputData);
