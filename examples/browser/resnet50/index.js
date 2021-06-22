@@ -1,6 +1,30 @@
+const Models = {
+  'MobileNetV2': {
+    name: 'mobilenetv2-1.0.onnx',
+    input: 'data',
+    output: 'mobilenetv20_output_flatten0_reshape0',
+    postprocess: true,
+  },
+  'ResNet50V2': {
+    name: 'resnet50-v2-7.onnx',
+    input: 'data',
+    output: 'resnetv24_dense0_fwd',
+    postprocess: true,
+  }
+};
+
+const ExecutionProviders = {
+  'wasm_webnn': ['wasm', 'webnn'],
+  'wasm': ['wasm'],
+  'webgl': ['webgl'],
+};
+
 async function runExample() {
+  const sessionOptions = {executionProviders: ExecutionProviders[document.getElementById('eps').value]};
+  const model = Models[document.getElementById('model').value];
+  const numRuns = parseInt(document.getElementById('numRuns').value);
   // Create an ONNX inference session with Wasm backend.
-  const session = await ort.InferenceSession.create('./resnet50_8.onnx');;
+  const session = await ort.InferenceSession.create(model.name, sessionOptions);
 
   // Load image.
   const imageLoader = new ImageLoader(imageSize, imageSize);
@@ -12,15 +36,27 @@ async function runExample() {
   const preprocessedData = preprocess(imageData.data, width, height);
 
   const inputTensor = new ort.Tensor('float32', preprocessedData, [1, 3, width, height]);
+  let feeds = {};
+  feeds[model.input] = inputTensor;
+  let outputMap = await session.run(feeds);
   // Run model with Tensor inputs and get the result.
-  const startTime = performance.now();
-  const outputMap = await session.run({'gpu_0/data_0': inputTensor});
-  const elapsedTime = performance.now() - startTime;
-  console.log(`inference time ${elapsedTime.toFixed(2)} ms`);
-  const outputData = outputMap['gpu_0/softmax_1'].data;
-
+  let total = 0;
+  for (i = 0; i < numRuns; i++) {
+    const startTime = performance.now();
+    outputMap = await session.run(feeds);
+    const elapsedTime = performance.now() - startTime;
+    total += elapsedTime;
+  }
+  let outputData = outputMap[model.output].data;
+  if (model.postprocess) {
+    outputData = postprocess(outputData);
+  }
   // Render the output result in html.
   printMatches(outputData);
+
+  const average = total/numRuns;
+  const inferenceTime = document.getElementById('inferenceTime');
+  inferenceTime.innerHTML = `<br>Model: ${model.name}<br>Execution Providers: ${sessionOptions.executionProviders}<br>The average of ${numRuns} inferences took ${average.toFixed(2)} ms`;
 }
 
 /**
@@ -40,6 +76,15 @@ function preprocess(data, width, height) {
   ndarray.ops.assign(dataProcessed.pick(0, 2, null, null), dataFromImage.pick(null, null, 0));
 
   return dataProcessed.data;
+}
+
+function postprocess(arr) {
+  // softmax
+  const C = Math.max(...arr);
+  const d = arr.map((y) => Math.exp(y - C)).reduce((a, b) => a + b);
+  return arr.map((value, index) => {
+    return Math.exp(value - C) / d;
+  });
 }
 
 /**

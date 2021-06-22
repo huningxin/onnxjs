@@ -1,5 +1,6 @@
 <html>
 <head>
+  <script src="../webnn-polyfill/webnn-polyfill.js"></script>
   <script src="../dist/ort.min.js"></script>
   <script src="../common/ndarray-browser-min.js"></script>
   <script src="../common/imagenet.js"></script>
@@ -10,12 +11,34 @@
   </script>
 </head>
 <body>
-  <h1>Resnet50 Example</h1>
+  <h1>ONNXRuntime Web Image Classification Example</h1>
   <img id="imageSource" src="./resnet-cat.jpg"/>
+  <div>
+    <label for="model">Model:</label>
+    <select name="model" id="model">
+      <option value="ResNet50V2">ResNet50V2</option>
+      <option value="MobileNetV2">MobileNetV2</option>
+    </select>
+  </div>
+  <div>
+    <label for="numRuns">Number of Runs: </label>
+    <input id="numRuns" type="number" value="50">
+  </div>
+  <div>
+    <label for="eps">Execution Providers:</label>
+    <select name="eps" id="eps">
+      <option value="wasm">wasm</option>
+      <option value="wasm_webnn">wasm, webnn</option>
+      <option value="webgl">webgl</option>
+    </select>
+  </div>
   <div>
     <input type="button" value="Run" onclick="runExample()">
   </div>
   <div id="predictions">
+
+  </div>
+  <div id="inferenceTime">
 
   </div>
 </body>
