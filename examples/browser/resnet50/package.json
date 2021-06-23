@@ -1,0 +1,13 @@
+{
+  "name": "electron_ort_image_classification_example",
+  "version": "0.0.1",
+  "description": "The ONNXRuntime Web Image Classification Example with WebNN acceleration",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "license": "Apache 2.0",
+  "dependencies": {
+    "electron": "^13.1.4"
+  }
+}
