@@ -26,7 +26,7 @@ function createWindow() {
     if (request.url.endsWith('.wasm/')) {
       let wasmPath = request.url.substr(PROTOCOL.length + 3);
       wasmPath = wasmPath.substr(0, wasmPath.length - 1);
-      url = path.join(__dirname, '..', 'dist', wasmPath);
+      url = path.join(__dirname, '..', 'onnxruntime', 'js', 'web', 'dist', wasmPath);
       url = path.normalize(url);
       console.log('redirect ' + wasmPath + ' to ' + url);
     } else {
