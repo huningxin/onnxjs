@@ -10,6 +10,12 @@ const Models = {
     input: 'data',
     output: 'resnetv24_dense0_fwd',
     postprocess: true,
+  },
+  'SqueezeNetV1_1': {
+    name: 'squeezenet1.1.onnx',
+    input: 'data',
+    output: 'squeezenet0_flatten0_reshape0',
+    postprocess: true,
   }
 };
 
